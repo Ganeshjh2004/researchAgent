@@ -1,0 +1,18 @@
+Redis is an in-memory data store commonly used
+for caching, session management, and message
+broker applications.
+
+Redis supports data structures such as strings,
+lists, sets, hashes, and sorted sets.
+
+Redis persistence allows data to survive
+restarts. RDB snapshots and AOF logs are two
+persistence mechanisms.
+
+Redis can improve application performance by
+reducing repeated database queries.
+
+Redis is commonly used alongside PostgreSQL
+in backend applications. PostgreSQL stores
+persistent relational data, while Redis can
+cache frequently accessed data.
