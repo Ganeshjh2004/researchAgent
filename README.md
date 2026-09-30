@@ -1,6 +1,6 @@
 # AI Research Agent
 
-The AI Research Agent is a robust, production-grade application for conducting autonomous multi-step research. It accepts user research queries, executes an orchestrated workflow using external search engines (DuckDuckGo, Wikipedia), synthesizes the gathered information using a Large Language Model (Groq), and generates downloadable Markdown reports. The system is decoupled into a FastAPI backend (with a Redis-backed async worker) and a modern React/Vite frontend.
+The AI Research Agent is a functional AI Research Agent MVP and demonstration-ready asynchronous research system. It accepts user research queries, executes an orchestrated workflow using external search engines (DuckDuckGo, Wikipedia), synthesizes the gathered information using a Large Language Model (Groq), and generates downloadable Markdown reports. The system is decoupled into a FastAPI backend (with a Redis-backed async worker) and a modern React/Vite frontend.
 
 ---
 
@@ -102,12 +102,11 @@ AI Agent/
 │
 ├── reports/                  # Generated full research reports (.txt)
 │
-├── tests/                    # Unit and E2E test files
-│   ├── e2e_test_api.py
-│   ├── test_api.py
-│   ├── test_research_workflow.py
-│   ├── test_router.py
-│   └── test_worker_recovery.py
+├── e2e_test_api.py           # E2E tests
+├── test_api.py               # API tests
+├── test_research_workflow.py # Workflow tests
+├── test_router.py            # Router tests
+├── test_worker_recovery.py   # Worker recovery tests
 │
 └── frontend/                 # React/Vite web application
     ├── package.json
@@ -129,7 +128,7 @@ AI Agent/
 ## Prerequisites
 
 - **Python:** 3.12 or newer
-- **Node.js:** v18 or newer
+- **Node.js:** 20.19.0+ or 22.12.0+ (required by Vite 8)
 - **Redis:** Local Redis server running on port `6379`
 - **Groq API Key:** Required for the LLM synthesis
 
@@ -216,10 +215,22 @@ Returns the status of the API and its Redis connection.
 ### Submit Research Task
 **POST** `/api/v1/research`
 **Body:** `{"query": "string"}`
-**Response:** `{"task_id": "uuid", "status": "queued", "message": "string"}`
+**Response:** `{"task_id": "uuid", "status": "queued", "query": "string", "error": null}`
 
-### Check Task Status & Retrieve Result
+### Check Task Status
 **GET** `/api/v1/research/{task_id}`
+**Response:**
+```json
+{
+  "task_id": "uuid",
+  "status": "running",
+  "query": "string",
+  "error": null
+}
+```
+
+### Retrieve Task Result Metadata
+**GET** `/api/v1/research/{task_id}/result`
 **Response:**
 ```json
 {
