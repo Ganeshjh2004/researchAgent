@@ -4,14 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="AI Research Agent — structured research powered by AI." />
+    <meta name="description" content="ResearchMate — Autonomous AI research assistant with structured reports and real-time citations." />
+    <!-- Immediate theme bootstrap to prevent flash of wrong theme -->
+    <script>
+      (function () {
+        try {
+          const stored = localStorage.getItem('researchmate_theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = stored === 'dark' || stored === 'light' ? stored : (prefersDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (_) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>ResearchAI</title>
+    <title>ResearchMate — AI Research Assistant</title>
   </head>
   <body>
     <div id="root"></div>

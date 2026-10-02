@@ -4,14 +4,21 @@ import json
 import time
 import sys
 import threading
-import redis
 from pathlib import Path
+import redis
 
 # Setup Path
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 
 from research_workflow import run_research_workflow
+from persistence import (
+    sync_update_task_running,
+    sync_update_task_retry,
+    sync_update_task_completed,
+    sync_update_task_failed,
+    sync_create_report_record,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -114,7 +121,6 @@ def recover_abandoned_tasks():
                 if retries < MAX_RETRIES:
                     log.warning(f"Recovering abandoned task {task_id}. Attempt {retries + 1}/{MAX_RETRIES}.")
                     # Atomically remove from processing and push back to queue
-                    # Use a transaction
                     pipeline = redis_client.pipeline()
                     pipeline.lrem(PROCESSING_QUEUE, 0, task_id)
                     pipeline.lpush(QUEUE_NAME, task_id)
@@ -123,12 +129,22 @@ def recover_abandoned_tasks():
                         "retries": retries + 1
                     })
                     pipeline.execute()
+                    # Persist retry state in PostgreSQL
+                    try:
+                        sync_update_task_retry(task_id, retries + 1)
+                    except Exception as pg_err:
+                        log.warning(f"Failed to persist retry in PostgreSQL for task {task_id}: {pg_err}")
                 else:
                     log.error(f"Task {task_id} exceeded max retries. Marking as failed.")
                     complete_lua(
                         keys=[task_key, PROCESSING_QUEUE],
                         args=[task_id, "failed", "", "", "", "Max retries exceeded due to worker crashes."]
                     )
+                    # Persist failure in PostgreSQL
+                    try:
+                        sync_update_task_failed(task_id, "Max retries exceeded due to worker crashes.")
+                    except Exception as pg_err:
+                        log.warning(f"Failed to persist failure in PostgreSQL for task {task_id}: {pg_err}")
     except Exception as e:
         log.error(f"Error during recovery sweep: {e}")
 
@@ -146,13 +162,19 @@ def execute_task(task_id: str):
         
     query = task_data.get("query")
     
-    # Mark as running
+    # Mark as running in Redis
     redis_client.hset(task_key, mapping={
         "status": "running",
         "worker": WORKER_ID,
         "started_at": str(time.time()),
         "last_heartbeat": str(time.time())
     })
+    
+    # Persist running state in PostgreSQL (idempotent; will not reopen completed task)
+    try:
+        sync_update_task_running(task_id)
+    except Exception as pg_err:
+        log.warning(f"Failed to update task {task_id} to running in PostgreSQL: {pg_err}")
     
     log.info(f"Task {task_id}: Starting execution for query '{query}'")
     
@@ -179,6 +201,11 @@ def execute_task(task_id: str):
                 log.error(f"Task {task_id}: Failed - {error_msg}")
             else:
                 log.warning(f"Task {task_id}: Could not fail (state modified concurrently).")
+                
+            try:
+                sync_update_task_failed(task_id, error_msg or "Unknown workflow failure")
+            except Exception as pg_err:
+                log.warning(f"Failed to persist failure in PostgreSQL for task {task_id}: {pg_err}")
         else:
             report = state.get("synthesized_report", "")
             lines = report.splitlines()
@@ -201,7 +228,34 @@ def execute_task(task_id: str):
 
             sources = json.dumps(state.get("research_sources", []))
             filename = state.get("output_filename", "")
-            
+            safe_filename = Path(filename).name if filename else ""
+
+            # Step 5: Report Handling - persist metadata in research_reports (not report content)
+            if safe_filename:
+                report_file_path = BASE_DIR / "reports" / safe_filename
+                size_bytes = 0
+                if report_file_path.exists() and report_file_path.is_file():
+                    size_bytes = report_file_path.stat().st_size
+                elif report:
+                    size_bytes = len(report.encode("utf-8"))
+
+                try:
+                    rep_record = sync_create_report_record(
+                        task_id=task_id,
+                        filename=safe_filename,
+                        storage_key=f"reports/{safe_filename}",
+                        size_bytes=size_bytes,
+                        storage_provider="local",
+                        content_type="text/plain",
+                    )
+                    if not rep_record and report_file_path.exists():
+                        log.warning(
+                            f"Task {task_id}: Report metadata insertion failed in PostgreSQL. "
+                            f"Report file preserved as local artifact at: {report_file_path}"
+                        )
+                except Exception as meta_err:
+                    log.error(f"Task {task_id}: Error persisting report metadata to PostgreSQL: {meta_err}")
+
             res = complete_lua(
                 keys=[task_key, PROCESSING_QUEUE],
                 args=[task_id, "completed", filename, summary, sources, ""]
@@ -210,6 +264,11 @@ def execute_task(task_id: str):
                 log.info(f"Task {task_id}: Completed successfully.")
             else:
                 log.warning(f"Task {task_id}: Could not complete (state modified concurrently).")
+
+            try:
+                sync_update_task_completed(task_id)
+            except Exception as pg_err:
+                log.warning(f"Failed to persist completion in PostgreSQL for task {task_id}: {pg_err}")
                 
     except Exception as exc:
         log.error(f"Task {task_id}: Crashed with exception: {exc}")
@@ -217,6 +276,10 @@ def execute_task(task_id: str):
             keys=[task_key, PROCESSING_QUEUE],
             args=[task_id, "failed", "", "", "", "Internal execution error."]
         )
+        try:
+            sync_update_task_failed(task_id, f"Internal execution error: {exc}")
+        except Exception as pg_err:
+            log.warning(f"Failed to persist failure in PostgreSQL for task {task_id}: {pg_err}")
     finally:
         hb_thread.stop()
         hb_thread.join()

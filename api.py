@@ -3,10 +3,11 @@ import uuid
 import sys
 import json
 import os
+from contextlib import asynccontextmanager
 from typing import Optional, List, Union, Dict, Any
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -16,6 +17,14 @@ BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 
 from research_workflow import run_research_workflow
+from db import close_db
+from persistence import (
+    create_task_record,
+    get_task_record,
+    update_task_failed,
+    get_report_record,
+    list_task_records,
+)
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -25,11 +34,19 @@ logging.basicConfig(
 )
 log = logging.getLogger("api")
 
-# ── App & Redis setup ─────────────────────────────────────────────────────────
+
+# ── Lifespan & App Setup ──────────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await close_db()
+
+
 app = FastAPI(
     title="AI Research Agent API",
     description="Production API Core for LangGraph research workflow.",
     version="1.1.0",
+    lifespan=lifespan,
 )
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
@@ -42,6 +59,7 @@ app.add_middleware(
     ],
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
+    expose_headers=["Content-Disposition"],
 )
 
 REDIS_URI = os.getenv("REDIS_URI", "redis://localhost:6379")
@@ -96,29 +114,44 @@ def ready_check():
     try:
         if redis_client.ping():
             return {"status": "ok", "redis": "connected"}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=503, detail="Redis unavailable")
+
     raise HTTPException(status_code=503, detail="Redis ping failed")
 
 @app.post("/api/v1/research", response_model=TaskStatusResponse, status_code=202)
-def submit_research(request: ResearchRequest):
-    """Submit a research job for background processing."""
+async def submit_research(request: ResearchRequest):
+    """
+    Submit a research job for background processing.
+    1. Generates UUID task ID.
+    2. Creates durable PostgreSQL record (if configured).
+    3. Enqueues job via Redis queue.
+    4. Preserves HTTP 202 response contract.
+    """
     task_id = str(uuid.uuid4())
     
+    # 1. Create durable PostgreSQL task record
     try:
-        # Initialize task in Redis
+        await create_task_record(task_id=task_id, query=request.query)
+    except Exception as e:
+        log.warning(f"Could not write task {task_id} to PostgreSQL: {e}")
+
+    # 2. Enqueue in Redis
+    try:
         redis_client.hset(f"task:{task_id}", mapping={
             "status": "queued",
             "query": request.query,
             "retries": "0"
         })
-        # Set expiry of 7 days to clean up old tasks automatically
         redis_client.expire(f"task:{task_id}", 604800)
-        
-        # Enqueue the task
         redis_client.lpush("research:queue", task_id)
     except Exception as e:
         log.error(f"Failed to write to Redis: {e}")
+        # Attempt to mark failed in PostgreSQL if Redis enqueue fails
+        try:
+            await update_task_failed(task_id, "Failed to enqueue task to Redis")
+        except Exception:
+            pass
         raise HTTPException(status_code=500, detail="Failed to initialize task. Storage unavailable.")
 
     return TaskStatusResponse(
@@ -127,52 +160,112 @@ def submit_research(request: ResearchRequest):
         query=request.query
     )
 
+@app.get("/api/v1/research/history", response_model=List[TaskStatusResponse])
+async def get_task_history(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """Retrieve database-backed task history."""
+    tasks = await list_task_records(limit=limit, offset=offset)
+    return [
+        TaskStatusResponse(
+            task_id=str(t["id"]),
+            status=t["status"],
+            query=t["query"],
+            error=t.get("error_message"),
+        )
+        for t in tasks
+    ]
+
 @app.get("/api/v1/research/{task_id}", response_model=TaskStatusResponse)
-def get_task_status(task_id: str):
-    """Retrieve the status of a task."""
+async def get_task_status(task_id: str):
+    """
+    Retrieve the status of a task.
+    Checks Redis first (hot cache), then falls back to PostgreSQL (system of record).
+    """
     task_data = redis_client.hgetall(f"task:{task_id}")
-    if not task_data:
-        raise HTTPException(status_code=404, detail="Task not found")
+    if task_data:
+        return TaskStatusResponse(
+            task_id=task_id,
+            status=task_data.get("status", "unknown"),
+            query=task_data.get("query", "unknown"),
+            error=task_data.get("error")
+        )
         
-    return TaskStatusResponse(
-        task_id=task_id,
-        status=task_data.get("status", "unknown"),
-        query=task_data.get("query", "unknown"),
-        error=task_data.get("error")
-    )
+    # Fallback to PostgreSQL
+    db_task = await get_task_record(task_id)
+    if db_task:
+        return TaskStatusResponse(
+            task_id=str(db_task["id"]),
+            status=db_task.get("status", "unknown"),
+            query=db_task.get("query", "unknown"),
+            error=db_task.get("error_message")
+        )
+
+    raise HTTPException(status_code=404, detail="Task not found")
 
 @app.get("/api/v1/research/{task_id}/result", response_model=TaskResultResponse)
-def get_task_result(task_id: str):
-    """Retrieve the full research result metadata."""
+async def get_task_result(task_id: str):
+    """
+    Retrieve the full research result metadata.
+    Checks Redis first, then falls back to PostgreSQL.
+    """
     task_data = redis_client.hgetall(f"task:{task_id}")
-    if not task_data:
-        raise HTTPException(status_code=404, detail="Task not found")
-        
-    sources_raw = task_data.get("sources")
-    sources = json.loads(sources_raw) if sources_raw else []
+    if task_data:
+        sources_raw = task_data.get("sources")
+        sources = json.loads(sources_raw) if sources_raw else []
 
+        return TaskResultResponse(
+            task_id=task_id,
+            status=task_data.get("status", "unknown"),
+            query=task_data.get("query", "unknown"),
+            filename=task_data.get("filename"),
+            summary=task_data.get("summary"),
+            sources=sources,
+            error=task_data.get("error")
+        )
+
+    # Fallback to PostgreSQL
+    db_task = await get_task_record(task_id)
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    db_report = await get_report_record(task_id)
     return TaskResultResponse(
-        task_id=task_id,
-        status=task_data.get("status", "unknown"),
-        query=task_data.get("query", "unknown"),
-        filename=task_data.get("filename"),
-        summary=task_data.get("summary"),
-        sources=sources,
-        error=task_data.get("error")
+        task_id=str(db_task["id"]),
+        status=db_task.get("status", "unknown"),
+        query=db_task.get("query", "unknown"),
+        filename=db_report.get("filename") if db_report else None,
+        summary=None,
+        sources=[],
+        error=db_task.get("error_message")
     )
 
 @app.get("/api/v1/research/{task_id}/report")
-def get_task_report(task_id: str):
-    """Retrieve the saved .txt report file."""
+async def get_task_report(task_id: str):
+    """
+    Retrieve the saved .txt report file.
+    Checks Redis and PostgreSQL metadata for filename, then serves from REPORTS_DIR.
+    """
     task_data = redis_client.hgetall(f"task:{task_id}")
-    if not task_data:
-        raise HTTPException(status_code=404, detail="Task not found")
-        
-    status = task_data.get("status")
+    status = None
+    filename = None
+
+    if task_data:
+        status = task_data.get("status")
+        filename = task_data.get("filename")
+    else:
+        db_task = await get_task_record(task_id)
+        if not db_task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        status = db_task.get("status")
+        db_report = await get_report_record(task_id)
+        if db_report:
+            filename = db_report.get("filename")
+
     if status != "completed":
         raise HTTPException(status_code=400, detail=f"Task is {status}, report not available.")
         
-    filename = task_data.get("filename")
     if not filename:
         raise HTTPException(status_code=404, detail="Filename not found in task metadata.")
         

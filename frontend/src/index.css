@@ -1,36 +1,217 @@
-/* ── Reset & Design Tokens ─────────────────────────────────────────────────── */
-:root {
-  /* Colors */
-  --color-white: #ffffff;
-  --color-bg: #f7f8fa;
-  --color-sidebar-bg: #f0f2f5;
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-light: #eff6ff;
-  --color-text: #1e293b;
-  --color-text-secondary: #64748b;
-  --color-border: #e2e8f0;
-  --color-badge-completed: #dcfce7;
-  --color-badge-completed-text: #166534;
-  --color-badge-loading: #fef9c3;
-  --color-badge-loading-text: #854d0e;
-  --color-error: #dc2626;
+/* ── ResearchMate Design System & Tokens ───────────────────────────────────── */
 
-  /* Spacing */
-  --sidebar-width: 260px;
+:root,
+[data-theme="light"] {
+  /* Application Surfaces & Backgrounds */
+  --bg-app: #f8fafc;
+  --surface-primary: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-sidebar: #f1f5f9;
+  --surface-hover: #e2e8f0;
+  --surface-active: #cbd5e1;
+
+  /* Typography Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  /* Borders & Dividers */
+  --border-default: #e2e8f0;
+  --border-subtle: #edf2f7;
+  --border-focus: #2563eb;
+
+  /* Accents & Brand */
+  --accent-primary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-active: #1e40af;
+  --accent-subtle: #eff6ff;
+  --accent-contrast: #ffffff;
+
+  /* Status Tokens */
+  --status-success: #16a34a;
+  --status-success-bg: #dcfce7;
+  --status-success-border: #bbf7d0;
+  --status-warning: #d97706;
+  --status-warning-bg: #fef3c7;
+  --status-warning-border: #fde68a;
+  --status-error: #dc2626;
+  --status-error-bg: #fee2e2;
+  --status-error-border: #fecaca;
+  --status-running: #2563eb;
+  --status-running-bg: #dbeafe;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.25);
+
+  /* Legacy Aliases for Existing Component Compatibility */
+  --color-white: var(--surface-primary);
+  --color-bg: var(--bg-app);
+  --color-sidebar-bg: var(--surface-sidebar);
+  --color-primary: var(--accent-primary);
+  --color-primary-hover: var(--accent-hover);
+  --color-primary-light: var(--accent-subtle);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border-default);
+  --color-badge-completed: var(--status-success-bg);
+  --color-badge-completed-text: var(--status-success);
+  --color-badge-loading: var(--status-warning-bg);
+  --color-badge-loading-text: var(--status-warning);
+  --color-error: var(--status-error);
+}
+
+[data-theme="dark"] {
+  /* Application Surfaces & Backgrounds */
+  --bg-app: #090d16;
+  --surface-primary: #0f172a;
+  --surface-elevated: #1e293b;
+  --surface-sidebar: #0b1120;
+  --surface-hover: #1e293b;
+  --surface-active: #334155;
+
+  /* Typography Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  /* Borders & Dividers */
+  --border-default: #1e293b;
+  --border-subtle: #162032;
+  --border-focus: #3b82f6;
+
+  /* Accents & Brand */
+  --accent-primary: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-active: #2563eb;
+  --accent-subtle: rgba(59, 130, 246, 0.15);
+  --accent-contrast: #ffffff;
+
+  /* Status Tokens */
+  --status-success: #4ade80;
+  --status-success-bg: rgba(34, 197, 94, 0.16);
+  --status-success-border: rgba(34, 197, 94, 0.28);
+  --status-warning: #fbbf24;
+  --status-warning-bg: rgba(245, 158, 11, 0.16);
+  --status-warning-border: rgba(245, 158, 11, 0.28);
+  --status-error: #f87171;
+  --status-error-bg: rgba(239, 68, 68, 0.16);
+  --status-error-border: rgba(239, 68, 68, 0.28);
+  --status-running: #60a5fa;
+  --status-running-bg: rgba(59, 130, 246, 0.16);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.45), 0 1px 2px -1px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 10px 20px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
+
+  /* Legacy Aliases for Existing Component Compatibility */
+  --color-white: var(--surface-primary);
+  --color-bg: var(--bg-app);
+  --color-sidebar-bg: var(--surface-sidebar);
+  --color-primary: var(--accent-primary);
+  --color-primary-hover: var(--accent-hover);
+  --color-primary-light: var(--accent-subtle);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border-default);
+  --color-badge-completed: var(--status-success-bg);
+  --color-badge-completed-text: var(--status-success);
+  --color-badge-loading: var(--status-warning-bg);
+  --color-badge-loading-text: var(--status-warning);
+  --color-error: var(--status-error);
+}
+
+/* System dark mode fallback when data-theme attribute is not explicitly set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-app: #090d16;
+    --surface-primary: #0f172a;
+    --surface-elevated: #1e293b;
+    --surface-sidebar: #0b1120;
+    --surface-hover: #1e293b;
+    --surface-active: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-inverse: #0f172a;
+    --border-default: #1e293b;
+    --border-subtle: #162032;
+    --border-focus: #3b82f6;
+    --accent-primary: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-active: #2563eb;
+    --accent-subtle: rgba(59, 130, 246, 0.15);
+    --accent-contrast: #ffffff;
+    --status-success: #4ade80;
+    --status-success-bg: rgba(34, 197, 94, 0.16);
+    --status-warning: #fbbf24;
+    --status-warning-bg: rgba(245, 158, 11, 0.16);
+    --status-error: #f87171;
+    --status-error-bg: rgba(239, 68, 68, 0.16);
+    --status-running: #60a5fa;
+    --status-running-bg: rgba(59, 130, 246, 0.16);
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.45);
+    --shadow-elevated: 0 10px 20px -3px rgba(0, 0, 0, 0.6);
+    --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
+
+    --color-white: var(--surface-primary);
+    --color-bg: var(--bg-app);
+    --color-sidebar-bg: var(--surface-sidebar);
+    --color-primary: var(--accent-primary);
+    --color-primary-hover: var(--accent-hover);
+    --color-primary-light: var(--accent-subtle);
+    --color-text: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-border: var(--border-default);
+    --color-badge-completed: var(--status-success-bg);
+    --color-badge-completed-text: var(--status-success);
+    --color-badge-loading: var(--status-warning-bg);
+    --color-badge-loading-text: var(--status-warning);
+    --color-error: var(--status-error);
+  }
+}
+
+/* ── Global Scales ─────────────────────────────────────────────────────────── */
+:root {
+  /* Sizing and Dimensions */
+  --sidebar-width: 270px;
   --sidebar-collapsed-width: 0px;
-  --radius: 8px;
+  --header-height: 56px;
+
+  /* Border Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --radius: var(--radius-md);
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
 
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, Oxygen, Ubuntu, sans-serif;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
+/* ── CSS Reset ─────────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -44,10 +225,11 @@ body,
 #root {
   height: 100%;
   font-family: var(--font-family);
-  color: var(--color-text);
-  background: var(--color-bg);
+  color: var(--text-primary);
+  background: var(--bg-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 button {
@@ -55,6 +237,15 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+textarea:focus-visible,
+input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 textarea {
@@ -69,4 +260,16 @@ ul {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

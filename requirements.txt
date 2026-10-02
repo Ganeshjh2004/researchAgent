@@ -1,7 +1,8 @@
-# Direct runtime dependencies for the AI Agent project.
+# Direct runtime dependencies for the ResearchMate project.
 # Versions reflect what is installed in the venv.
 # Do not add langchain-openai or langchain-anthropic — they are not used by this project.
 
+# ── Core LangChain / LangGraph ────────────────────────────────────────────────
 langchain==1.4.2
 langgraph==1.2.12
 langchain-core==1.6.5
@@ -9,11 +10,31 @@ langchain-community==0.4.2
 langchain-groq==1.1.3
 langchain-huggingface==1.2.2
 langchain-chroma==1.1.0
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
 redis==8.1.0
 chromadb==1.5.9
+
+# ── PostgreSQL drivers (Supabase / local PostgreSQL readiness) ────────────────
+# asyncpg: async driver for SQLAlchemy + FastAPI async patterns.
+#   Required for postgresql+asyncpg:// DATABASE_URL.
+asyncpg==0.31.0
+greenlet==3.5.6
+# psycopg2-binary: sync driver, used by Alembic migrations and tooling.
+#   Required for postgresql+psycopg2:// DATABASE_URL.
+# psycopg2-binary==2.9.10
+# NOTE: psycopg2-binary requires pg_config (PostgreSQL client tools) on Windows.
+# On Linux/Docker (Cloud Run), it installs cleanly: pip install psycopg2-binary==2.9.10
+# On Windows: install PostgreSQL client tools or use asyncpg exclusively.
+
+# ── ML / Embeddings ───────────────────────────────────────────────────────────
 sentence-transformers==6.1.0
+
+# ── Web research tools ────────────────────────────────────────────────────────
 duckduckgo-search==8.1.1
 wikipedia==1.4.0
+
+# ── Application framework ─────────────────────────────────────────────────────
 python-dotenv==1.2.3
 pydantic==2.13.5
 fastapi==0.141.1

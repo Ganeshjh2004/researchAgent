@@ -1,12 +1,10 @@
+import os
 import redis
 import json
 from langchain_core.messages import HumanMessage, AIMessage
 
-client = redis.Redis(
-    host="localhost",
-    port=6379,
-    decode_responses=True,
-)
+_REDIS_URI = os.getenv("REDIS_URI", "redis://localhost:6379")
+client = redis.Redis.from_url(_REDIS_URI, decode_responses=True)
 
 
 def save_message(session_id, role, content):

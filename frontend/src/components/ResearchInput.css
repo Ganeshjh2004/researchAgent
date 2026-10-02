@@ -1,87 +1,333 @@
-/* ── Research Input ─────────────────────────────────────────────────────────── */
-.research-input-wrapper {
+/* ── Research Home & Composer Styles ──────────────────────────────────────── */
+
+.research-home-wrapper {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  padding: 40px 24px;
+  padding: 40px 20px 48px;
+  background: var(--bg-app);
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+.research-home-content {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  animation: fadeInHome 0.25s ease-out;
+}
+
+@keyframes fadeInHome {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Welcome Header ────────────────────────────────────────────────────────── */
+.research-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  gap: var(--space-3);
 }
 
-.research-input-heading {
-  font-size: 26px;
+.research-welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-full);
+  letter-spacing: 0.2px;
+}
+
+.badge-icon {
+  width: 13px;
+  height: 13px;
+}
+
+.research-welcome-heading {
+  font-size: 32px;
   font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 8px;
-  letter-spacing: -0.4px;
+  line-height: 1.25;
+  letter-spacing: -0.6px;
+  color: var(--text-primary);
 }
 
-.research-input-subtitle {
-  font-size: 15px;
-  color: var(--color-text-secondary);
-  margin-bottom: 32px;
-}
-
-.research-input-form {
-  width: 100%;
-  max-width: 560px;
-}
-
-.research-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 14px 16px;
+.research-welcome-subtitle {
   font-size: 15px;
   line-height: 1.6;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-white);
-  color: var(--color-text);
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  color: var(--text-secondary);
+  max-width: 580px;
 }
 
-.research-textarea:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+/* ── Research Composer Card ────────────────────────────────────────────────── */
+.research-composer-card {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
 }
 
-.research-textarea::placeholder {
-  color: var(--color-text-secondary);
+.research-composer-card:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-card), var(--focus-ring);
 }
 
-.research-submit-row {
+.research-composer-form {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: 12px;
-  gap: 12px;
+  flex-direction: column;
 }
 
-.research-submit-btn {
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  background: var(--color-primary);
-  color: var(--color-white);
-  border-radius: var(--radius);
+.composer-textarea-container {
+  padding: 18px 20px 10px;
+}
+
+.composer-textarea {
+  width: 100%;
+  min-height: 130px;
+  max-height: 320px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.composer-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Error Banner ──────────────────────────────────────────────────────────── */
+.composer-error-banner {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.15s ease;
-}
-
-.research-submit-btn:hover {
-  background: var(--color-primary-hover);
-}
-
-.research-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.validation-msg {
+  margin: 0 16px 12px;
+  padding: 8px 12px;
   font-size: 13px;
-  color: var(--color-error);
+  font-weight: 500;
+  color: var(--status-error);
+  background: var(--status-error-bg);
+  border: 1px solid var(--status-error-border);
+  border-radius: var(--radius-sm);
+}
+
+.composer-error-banner .error-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Composer Footer Row ───────────────────────────────────────────────────── */
+.composer-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-primary);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.composer-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.char-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.char-count.error {
+  color: var(--status-error);
+  font-weight: 600;
+}
+
+.composer-shortcut-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.composer-shortcut-hint strong {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.composer-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--accent-primary);
+  color: var(--accent-contrast);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+  transition: background-color var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+}
+
+.composer-submit-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.composer-submit-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.composer-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.submit-arrow {
+  width: 15px;
+  height: 15px;
+  transition: transform var(--transition-fast);
+}
+
+.composer-submit-btn:hover:not(:disabled) .submit-arrow {
+  transform: translateX(2px);
+}
+
+.submit-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spinSubmit 0.7s linear infinite;
+}
+
+@keyframes spinSubmit {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Example Prompts Section ───────────────────────────────────────────────── */
+.research-examples-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: 4px;
+}
+
+.examples-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.examples-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.example-prompt-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+  color: var(--text-primary);
+}
+
+.example-prompt-card:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.example-prompt-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.example-prompt-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.example-prompt-text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.example-prompt-card:hover:not(:disabled) .example-prompt-text {
+  color: var(--text-primary);
+}
+
+/* ── Responsive Adaptations ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .research-home-wrapper {
+    padding: 24px 16px 36px;
+  }
+
+  .research-welcome-heading {
+    font-size: 26px;
+  }
+
+  .research-welcome-subtitle {
+    font-size: 14px;
+  }
+
+  .examples-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .composer-shortcut-hint {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .composer-footer-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .composer-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

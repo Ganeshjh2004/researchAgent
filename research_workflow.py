@@ -50,7 +50,7 @@ if not _GROQ_KEY:
 
 llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0)
 
-REDIS_URI = "redis://localhost:6379"
+REDIS_URI = os.getenv("REDIS_URI", "redis://localhost:6379")
 
 # ── Workflow State ─────────────────────────────────────────────────────────────
 

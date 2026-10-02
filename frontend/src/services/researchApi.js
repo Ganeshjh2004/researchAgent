@@ -85,3 +85,14 @@ export async function getTaskResult(taskId) {
 export function getReportUrl(taskId) {
   return `${BASE_URL}/api/v1/research/${taskId}/report`;
 }
+
+/**
+ * Retrieve database-backed research history from the backend.
+ * @param {number} [limit=50]
+ * @param {number} [offset=0]
+ * @returns {Promise<Array<{ task_id: string, status: string, query: string, error?: string }>>}
+ */
+export async function getTaskHistory(limit = 50, offset = 0) {
+  const res = await fetch(`${BASE_URL}/api/v1/research/history?limit=${limit}&offset=${offset}`);
+  return handleResponse(res);
+}
